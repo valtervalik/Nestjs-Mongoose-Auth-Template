@@ -6,18 +6,21 @@ import {
 } from '@nestjs/common';
 import { Request } from 'express';
 import { ApiKeysService } from '../api-keys.service';
-import { InjectRepository } from '@nestjs/typeorm';
-import { ApiKey } from 'src/users/api-keys/entities/api-key.entity/api-key.entity';
-import { Repository } from 'typeorm';
+import {
+  ApiKey,
+  ApiKeyDocument,
+} from 'src/users/api-keys/schemas/api-key.schema';
 import { REQUEST_USER_KEY } from 'src/auth/auth.constants';
 import { ActiveUserData } from 'src/auth/interfaces/active-user-data.interface';
+import { InjectModel } from '@nestjs/mongoose';
+import { Model } from 'mongoose';
 
 @Injectable()
 export class ApiKeyGuard implements CanActivate {
   constructor(
     private readonly apiKeysService: ApiKeysService,
-    @InjectRepository(ApiKey)
-    private readonly apiKeysRepository: Repository<ApiKey>,
+    @InjectModel(ApiKey.name)
+    private readonly apiKeysModel: Model<ApiKeyDocument>,
   ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
@@ -28,18 +31,17 @@ export class ApiKeyGuard implements CanActivate {
     }
     const apiKeyEntityId = this.apiKeysService.extractFromApiKey(apiKey);
     try {
-      const apiKeyEntity = await this.apiKeysRepository.findOne({
-        where: { uuid: apiKeyEntityId },
-        //populate user
-        relations: { user: true },
-      });
+      const apiKeyEntity = await this.apiKeysModel
+        .findById(apiKeyEntityId)
+        .populate('user');
 
       await this.apiKeysService.validate(apiKey, apiKeyEntity.key);
 
       request[REQUEST_USER_KEY] = {
-        sub: apiKeyEntity.user.id,
+        sub: apiKeyEntity.user._id,
         email: apiKeyEntity.user.email,
         role: apiKeyEntity.user.role,
+        permission: apiKeyEntity.user.permission,
       } as ActiveUserData;
     } catch {
       throw new UnauthorizedException();
