@@ -6,11 +6,11 @@ import {
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { OAuth2Client } from 'google-auth-library';
-import { InjectRepository } from '@nestjs/typeorm';
-import { User } from 'src/users/entities/user.entity';
-import { Repository } from 'typeorm';
 import { Response } from 'express';
 import { AuthenticationService } from '../authentication.service';
+import { InjectModel } from '@nestjs/mongoose';
+import { User, UserDocument } from 'src/users/schemas/user.schema';
+import { Model } from 'mongoose';
 
 @Injectable()
 export class GoogleAuthService implements OnModuleInit {
@@ -19,7 +19,7 @@ export class GoogleAuthService implements OnModuleInit {
   constructor(
     private readonly configService: ConfigService,
     private readonly authenticationService: AuthenticationService,
-    @InjectRepository(User) private readonly userRepository: Repository<User>,
+    @InjectModel(User.name) private readonly userModel: Model<UserDocument>,
   ) {}
 
   onModuleInit() {
@@ -35,18 +35,19 @@ export class GoogleAuthService implements OnModuleInit {
       });
       const { email, sub: googleId } = loginTicket.getPayload();
 
-      const user = await this.userRepository.findOneBy({ googleId });
+      const user = await this.userModel.findOne({ googleId });
       if (user) {
         return this.authenticationService.generateTokens(user, response);
       } else {
-        const newUser = await this.userRepository.save({ email, googleId });
+        const newUser = new this.userModel({ email, googleId });
+        await newUser.save();
         return this.authenticationService.generateTokens(newUser, response);
       }
     } catch (err) {
-      const pgUniqueViolationCode = '23505';
-      if (err.code === pgUniqueViolationCode) {
-        throw new ConflictException();
+      if (err.code === 11000) {
+        throw new ConflictException('Email already in use');
       }
+
       throw new UnauthorizedException();
     }
   }
