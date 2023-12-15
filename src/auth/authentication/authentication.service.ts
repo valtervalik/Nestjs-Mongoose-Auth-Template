@@ -4,9 +4,6 @@ import {
   Injectable,
   UnauthorizedException,
 } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { User } from 'src/users/entities/user.entity';
-import { Repository } from 'typeorm';
 import { HashingService } from '../hashing/hashing.service';
 import { SignUpDto } from './dto/sign-up.dto';
 import { SignInDto } from './dto/sign-in.dto';
@@ -21,11 +18,14 @@ import {
 import { randomUUID } from 'crypto';
 import { OtpAuthService } from './otp-auth.service';
 import { Response } from 'express';
+import { InjectModel } from '@nestjs/mongoose';
+import { User, UserDocument } from 'src/users/schemas/user.schema';
+import { Model } from 'mongoose';
 
 @Injectable()
 export class AuthenticationService {
   constructor(
-    @InjectRepository(User) private readonly userRepository: Repository<User>,
+    @InjectModel(User.name) private readonly userModel: Model<UserDocument>,
     private readonly hashingService: HashingService,
     private readonly jwtService: JwtService,
     @Inject(jwtConfig.KEY)
@@ -36,25 +36,25 @@ export class AuthenticationService {
 
   async signUp(signUpDto: SignUpDto) {
     try {
-      const user = this.userRepository.create({
+      const user = new this.userModel({
         email: signUpDto.email,
         password: await this.hashingService.hash(signUpDto.password),
       });
-      await this.userRepository.save(user);
+      await user.save();
     } catch (e) {
-      const pgUniqueViolationCode = '23505';
-      if (e.code === pgUniqueViolationCode) {
-        throw new ConflictException();
+      if (e.code === 11000) {
+        throw new ConflictException('User already exists');
       }
       throw e;
     }
   }
 
   async signIn(signInDto: SignInDto, response: Response) {
-    const user = await this.userRepository.findOne({
-      where: { email: signInDto.email },
-      relations: { role: true, permission: true },
-    });
+    const user = await this.userModel
+      .findOne({ email: signInDto.email })
+      .populate('role')
+      .populate('permission')
+      .select('+password');
 
     if (!user) {
       throw new UnauthorizedException('User does not exists');
@@ -77,6 +77,7 @@ export class AuthenticationService {
         throw new UnauthorizedException('Invalid 2FA code');
       }
     }
+
     return await this.generateTokens(user, response);
   }
 
@@ -90,10 +91,10 @@ export class AuthenticationService {
         issuer: this.jwtConfiguration.issuer,
       });
 
-      const user = await this.userRepository.findOne({
-        where: { id: sub },
-        relations: { role: true, permission: true },
-      });
+      const user = await this.userModel
+        .findById(sub)
+        .populate('role')
+        .populate('permission');
 
       const isValid = await this.refreshTokenIdsStorage.validate(
         user.id,
@@ -101,7 +102,7 @@ export class AuthenticationService {
       );
 
       if (isValid) {
-        await this.refreshTokenIdsStorage.invalidate(user.id);
+        await this.refreshTokenIdsStorage.invalidate(user._id.toString());
       } else {
         throw new Error('Refresh token is invalid');
       }
@@ -117,7 +118,7 @@ export class AuthenticationService {
     }
   }
 
-  private async signToken<T>(userId: number, expiresIn: number, payload?: T) {
+  private async signToken<T>(userId: string, expiresIn: number, payload?: T) {
     return await this.jwtService.signAsync(
       {
         sub: userId,
@@ -136,15 +137,15 @@ export class AuthenticationService {
     const refreshTokenId = randomUUID();
     const [accessToken, refreshToken] = await Promise.all([
       this.signToken<Partial<ActiveUserData>>(
-        user.id,
+        user._id,
         this.jwtConfiguration.accessTokenTTL,
         { email: user.email, role: user.role, permission: user.permission },
       ),
-      this.signToken(user.id, this.jwtConfiguration.refreshTokenTTL, {
+      this.signToken(user._id, this.jwtConfiguration.refreshTokenTTL, {
         refreshTokenId,
       }),
     ]);
-    await this.refreshTokenIdsStorage.insert(user.id, refreshTokenId);
+    await this.refreshTokenIdsStorage.insert(user._id, refreshTokenId);
 
     response.cookie('refresh_token', refreshToken, {
       httpOnly: true,
