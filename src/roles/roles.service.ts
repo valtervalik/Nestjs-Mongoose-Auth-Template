@@ -12,15 +12,15 @@ export class RolesService {
     return `This action returns all roles`;
   }
 
-  findOne(id: number) {
+  findOne(id: string) {
     return `This action returns a #${id} role`;
   }
 
-  update(id: number, updateRoleDto: UpdateRoleDto) {
+  update(id: string, updateRoleDto: UpdateRoleDto) {
     return `This action updates a #${id} role`;
   }
 
-  remove(id: number) {
+  remove(id: string) {
     return `This action removes a #${id} role`;
   }
 }
