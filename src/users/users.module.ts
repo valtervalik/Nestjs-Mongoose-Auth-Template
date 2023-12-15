@@ -1,14 +1,24 @@
 import { Module } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { UsersController } from './users.controller';
-import { TypeOrmModule } from '@nestjs/typeorm';
-import { User } from './entities/user.entity';
-import { ApiKey } from './api-keys/entities/api-key.entity/api-key.entity';
-import { Role } from 'src/roles/entities/role.entity';
-import { Permission } from 'src/permissions/entities/permission.entity';
+import { ApiKey, ApiKeySchema } from './api-keys/schemas/api-key.schema';
+import { Role, RoleSchema } from 'src/roles/schemas/role.schema';
+import {
+  Permission,
+  PermissionSchema,
+} from 'src/permissions/schemas/permission.schema';
+import { MongooseModule } from '@nestjs/mongoose';
+import { User, UserSchema } from './schemas/user.schema';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([User, ApiKey, Role, Permission])],
+  imports: [
+    MongooseModule.forFeature([
+      { name: User.name, schema: UserSchema },
+      { name: ApiKey.name, schema: ApiKeySchema },
+      { name: Role.name, schema: RoleSchema },
+      { name: Permission.name, schema: PermissionSchema },
+    ]),
+  ],
   controllers: [UsersController],
   providers: [UsersService],
 })
