@@ -1,15 +1,15 @@
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { InjectRepository } from '@nestjs/typeorm';
+import { InjectModel } from '@nestjs/mongoose';
+import { Model } from 'mongoose';
 import { authenticator } from 'otplib';
-import { User } from 'src/users/entities/user.entity';
-import { Repository } from 'typeorm';
+import { User, UserDocument } from 'src/users/schemas/user.schema';
 
 @Injectable()
 export class OtpAuthService {
   constructor(
     private readonly configService: ConfigService,
-    @InjectRepository(User) private readonly userRepository: Repository<User>,
+    @InjectModel(User.name) private readonly userModel: Model<UserDocument>,
   ) {}
 
   async generateSecret(email: string) {
@@ -25,12 +25,9 @@ export class OtpAuthService {
   }
 
   async enableTFAForUser(email: string, secret: string) {
-    const { id } = await this.userRepository.findOneOrFail({
-      where: { email },
-      select: { id: true },
-    });
-    await this.userRepository.update(
-      { id },
+    const { _id } = await this.userModel.findOne({ email });
+    await this.userModel.updateOne(
+      { _id },
       //In the real world the secret would be encrypted
       { tfaSecret: secret, isTFAEnabled: true },
     );
