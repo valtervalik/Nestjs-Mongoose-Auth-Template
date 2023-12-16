@@ -60,22 +60,27 @@ export class AuthenticationService {
       throw new UnauthorizedException('User does not exists');
     }
 
+    if (!user.password) {
+      if (user.googleId) {
+        throw new UnauthorizedException('Please login with google');
+      }
+      throw new UnauthorizedException();
+    }
+
     const isEqual = await this.hashingService.compare(
       signInDto.password,
       user.password,
     );
+
     if (!isEqual) {
       throw new UnauthorizedException('Password does not match');
     }
-    if (user.isTFAEnabled) {
-      const isValid = this.otpAuthService.verifyCode(
-        signInDto.tfaCode,
-        user.tfaSecret,
-      );
 
-      if (!isValid) {
-        throw new UnauthorizedException('Invalid 2FA code');
-      }
+    if (
+      user.isTFAEnabled &&
+      !this.otpAuthService.verifyCode(signInDto.tfaCode, user.tfaSecret)
+    ) {
+      throw new UnauthorizedException('Invalid 2FA code');
     }
 
     return await this.generateTokens(user, response);
