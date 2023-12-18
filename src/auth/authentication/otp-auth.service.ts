@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
@@ -25,11 +25,13 @@ export class OtpAuthService {
   }
 
   async enableTFAForUser(email: string, secret: string) {
-    const { _id } = await this.userModel.findOne({ email });
-    await this.userModel.updateOne(
-      { _id },
-      //In the real world the secret would be encrypted
-      { tfaSecret: secret, isTFAEnabled: true },
-    );
+    try {
+      await this.userModel.findOneAndUpdate(
+        { email },
+        { tfaSecret: secret, isTFAEnabled: true },
+      );
+    } catch {
+      throw new BadRequestException('No user found');
+    }
   }
 }
