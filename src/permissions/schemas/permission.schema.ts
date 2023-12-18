@@ -1,10 +1,10 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import mongoose, { HydratedDocument } from 'mongoose';
+import { Document, HydratedDocument } from 'mongoose';
 
 export type PermissionDocument = HydratedDocument<Permission>;
 
 @Schema()
-export class Permission extends mongoose.Document {
+export class Permission extends Document {
   @Prop({ type: Boolean, default: false })
   create_user: boolean;
 
