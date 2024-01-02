@@ -19,7 +19,7 @@ type BaseServiceOptions = {
 };
 
 export function BaseService<M>(
-  modelClass: string,
+  modelClass: string | any,
   options: BaseServiceOptions = {},
 ): Type<IBaseService<M>> {
   const { softDelete = true } = options;
@@ -69,7 +69,7 @@ export function BaseService<M>(
       const populate = conditions['populate'] || [];
       const collation = conditions['collation'] || {};
 
-      const where: any = { ...conditions, deleted: false };
+      const where: Params = { ...conditions, deleted: false };
       delete where.order;
       delete where.populate;
       delete where.select;
@@ -140,7 +140,7 @@ export function BaseService<M>(
       const { page = 1, limit = 10 } = pagination;
       const skipCount = (page - 1) * limit;
 
-      const where: any = { deleted: false };
+      const where: Params = { deleted: false };
       delete where.order;
       pipeline.unshift({ $match: where });
 
@@ -209,7 +209,7 @@ export function BaseService<M>(
     }
 
     public async exists(conditions: Params): Promise<boolean> {
-      const where = { ...conditions, deleted: false };
+      const where: Params = { ...conditions, deleted: false };
       const exists = await this.model.exists(where);
       return !!exists;
     }
@@ -243,6 +243,7 @@ export function BaseService<M>(
         }
         return await this.update(id, {
           deleted: true,
+          deletedAt: new Date(),
         });
       }
       return await this.model.deleteOne({ _id: id });
@@ -286,6 +287,7 @@ export function BaseService<M>(
           {
             $set: {
               deleted: true,
+              deletedAt: new Date(),
             },
           },
         );
@@ -305,6 +307,7 @@ export function BaseService<M>(
           })
         : await this.update(id, {
             deleted: false,
+            restoredAt: new Date(),
           });
     }
 
@@ -328,14 +331,15 @@ export function BaseService<M>(
             {
               $set: {
                 deleted: false,
+                restoredAt: new Date(),
               },
             },
           );
     }
 
     public async count(conditions: Params = {}): Promise<number> {
-      const where = { ...conditions, deleted: false };
-      return this.model.countDocuments(where) as any as number;
+      const where: Params = { ...conditions, deleted: false };
+      return await this.model.countDocuments(where);
     }
   }
 
