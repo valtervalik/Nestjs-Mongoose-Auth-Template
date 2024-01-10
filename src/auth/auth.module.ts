@@ -2,17 +2,12 @@ import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { APP_GUARD } from '@nestjs/core';
 import { JwtModule } from '@nestjs/jwt';
-import { MongooseModule } from '@nestjs/mongoose';
+import { ApiKeysModule } from 'src/api-keys/api-keys.module';
 import { EncryptingModule } from 'src/encrypting/encrypting.module';
 import { HashingModule } from 'src/hashing/hashing.module';
-import { ApiKey, ApiKeySchema } from 'src/users/schemas/api-key.schema';
-import {
-  Permission,
-  PermissionSchema,
-} from 'src/users/schemas/permission.schema';
-import { Role, RoleSchema } from 'src/users/schemas/role.schema';
-import { User, UserDocument, UserSchema } from 'src/users/schemas/user.schema';
-import { HashingService } from '../hashing/hashing.service';
+import { PermissionsModule } from 'src/permissions/permissions.module';
+import { RolesModule } from 'src/roles/roles.module';
+import { UsersModule } from 'src/users/users.module';
 import { ApiKeysService } from './authentication/api-keys.service';
 import { AuthenticationController } from './authentication/authentication.controller';
 import { AuthenticationService } from './authentication/authentication.service';
@@ -32,27 +27,10 @@ import jwtConfig from './config/jwt.config';
 
 @Module({
   imports: [
-    MongooseModule.forFeatureAsync([
-      {
-        name: User.name,
-        useFactory: (hashingService: HashingService) => {
-          const schema = UserSchema;
-
-          schema.pre<UserDocument>('save', async function () {
-            const doc = this;
-            if (doc) {
-              doc.password = await hashingService.hash(doc.password);
-            }
-          });
-          return schema;
-        },
-        imports: [HashingModule],
-        inject: [HashingService],
-      },
-      { name: Role.name, useFactory: () => RoleSchema },
-      { name: Permission.name, useFactory: () => PermissionSchema },
-      { name: ApiKey.name, useFactory: () => ApiKeySchema },
-    ]),
+    UsersModule,
+    ApiKeysModule,
+    PermissionsModule,
+    RolesModule,
     JwtModule.registerAsync(jwtConfig.asProvider()),
     ConfigModule.forFeature(jwtConfig),
     HashingModule,
