@@ -7,9 +7,9 @@ import {
 import { InjectModel } from '@nestjs/mongoose';
 import { Request } from 'express';
 import { Model } from 'mongoose';
+import { ApiKey, ApiKeyDocument } from 'src/api-keys/schemas/api-key.schema';
 import { REQUEST_USER_KEY } from 'src/auth/auth.constants';
 import { ActiveUserData } from 'src/auth/interfaces/active-user-data.interface';
-import { ApiKey, ApiKeyDocument } from 'src/users/schemas/api-key.schema';
 import { ApiKeysService } from '../api-keys.service';
 
 @Injectable()
