@@ -1,10 +1,12 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { Document, HydratedDocument } from 'mongoose';
+import mongoose, { HydratedDocument } from 'mongoose';
+import { BaseSchema } from 'src/base/base.schema';
+import { User } from '../../users/schemas/user.schema';
 
 export type PermissionDocument = HydratedDocument<Permission>;
 
-@Schema()
-export class Permission extends Document {
+@Schema({ timestamps: true })
+export class Permission extends BaseSchema {
   @Prop({ type: Boolean, default: false })
   create_user: boolean;
 
@@ -13,5 +15,17 @@ export class Permission extends Document {
 
   @Prop({ type: Boolean, default: false })
   delete_user: boolean;
+
+  @Prop({ type: mongoose.Schema.Types.ObjectId, ref: 'User' })
+  createdBy: User;
+
+  @Prop({ type: mongoose.Schema.Types.ObjectId, ref: 'User' })
+  updatedBy: User;
+
+  @Prop({ type: mongoose.Schema.Types.ObjectId, ref: 'User' })
+  deletedBy: User;
+
+  @Prop({ type: mongoose.Schema.Types.ObjectId, ref: 'User' })
+  restoredBy: User;
 }
 export const PermissionSchema = SchemaFactory.createForClass(Permission);
