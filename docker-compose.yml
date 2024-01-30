@@ -2,12 +2,18 @@ version: '3.8'
 
 services:
   redis:
-    image: redis
+    image: redis:7-alpine
     restart: always
     ports:
-      - '${REDIS_PORT}:${REDIS_PORT}'
+      - '${REDIS_PORT}:6379'
+
   mongo:
-    image: mongo
+    image: mongo:7.0.5
     restart: always
     ports:
-      - '${DB_PORT}:${DB_PORT}'
+      - '${DB_PORT}:27017'
+    volumes:
+      - nestjs-template-mongo-db:/data/db
+
+volumes:
+  nestjs-template-mongo-db:
