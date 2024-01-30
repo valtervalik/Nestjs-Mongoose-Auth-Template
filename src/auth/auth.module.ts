@@ -2,8 +2,8 @@ import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { APP_GUARD } from '@nestjs/core';
 import { JwtModule } from '@nestjs/jwt';
-import { EncryptingModule } from 'src/encrypting/encrypting.module';
-import { HashingModule } from 'src/hashing/hashing.module';
+import { EncryptingModule } from 'src/common/encrypting/encrypting.module';
+import { HashingModule } from 'src/common/hashing/hashing.module';
 import { PermissionsModule } from 'src/permissions/permissions.module';
 import { RolesModule } from 'src/roles/roles.module';
 import { UsersModule } from 'src/users/users.module';
@@ -11,10 +11,10 @@ import { AuthenticationController } from './authentication/authentication.contro
 import { AuthenticationService } from './authentication/authentication.service';
 import { AccessTokenGuard } from './authentication/guards/access-token.guard';
 import { AuthGuard } from './authentication/guards/auth.guard';
-import { OtpAuthService } from './authentication/otp-auth.service';
 import { RefreshTokenIdsStorage } from './authentication/refresh-token-ids.storage/refresh-token-ids.storage';
-import { GoogleAuthController } from './authentication/social/google-auth.controller';
-import { GoogleAuthService } from './authentication/social/google-auth.service';
+import { GoogleAuthController } from './authentication/social/google-auth/google-auth.controller';
+import { GoogleAuthService } from './authentication/social/google-auth/google-auth.service';
+import { TFAAuthService } from './authentication/tfa-auth.service';
 import { PermissionsGuard } from './authorization/guards/permissions.guard';
 import { RolesGuard } from './authorization/guards/roles.guard';
 import jwtConfig from './config/jwt.config';
@@ -36,7 +36,7 @@ import jwtConfig from './config/jwt.config';
     AccessTokenGuard,
     RefreshTokenIdsStorage,
     AuthenticationService,
-    OtpAuthService,
+    TFAAuthService,
     GoogleAuthService,
   ],
   controllers: [AuthenticationController, GoogleAuthController],

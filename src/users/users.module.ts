@@ -1,7 +1,7 @@
 import { Module } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
-import { HashingModule } from 'src/hashing/hashing.module';
-import { HashingService } from 'src/hashing/hashing.service';
+import { HashingModule } from 'src/common/hashing/hashing.module';
+import { HashingService } from 'src/common/hashing/hashing.service';
 import { User, UserDocument, UserSchema } from './schemas/user.schema';
 import { UsersController } from './users.controller';
 import { UsersService } from './users.service';
