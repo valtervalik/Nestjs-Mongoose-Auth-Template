@@ -5,12 +5,12 @@ import {
   UnauthorizedException,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { OAuth2Client } from 'google-auth-library';
-import { Response } from 'express';
-import { AuthenticationService } from '../authentication.service';
 import { InjectModel } from '@nestjs/mongoose';
-import { User, UserDocument } from 'src/users/schemas/user.schema';
+import { Response } from 'express';
+import { OAuth2Client } from 'google-auth-library';
 import { Model } from 'mongoose';
+import { User, UserDocument } from 'src/users/schemas/user.schema';
+import { AuthenticationService } from '../../authentication.service';
 
 @Injectable()
 export class GoogleAuthService implements OnModuleInit {
