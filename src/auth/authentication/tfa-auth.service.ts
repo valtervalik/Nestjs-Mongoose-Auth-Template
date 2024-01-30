@@ -3,11 +3,11 @@ import { ConfigService } from '@nestjs/config';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { authenticator } from 'otplib';
-import { EncryptingService } from 'src/encrypting/encrypting.service';
+import { EncryptingService } from 'src/common/encrypting/encrypting.service';
 import { User, UserDocument } from 'src/users/schemas/user.schema';
 
 @Injectable()
-export class OtpAuthService {
+export class TFAAuthService {
   constructor(
     private readonly configService: ConfigService,
     private readonly encryptingService: EncryptingService,
