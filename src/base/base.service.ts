@@ -92,12 +92,17 @@ export function BaseService<M>(
         this.model.countDocuments(where),
       ]);
 
+      const hasNextPage = total > page * limit;
+      const nextPage = hasNextPage ? page + 1 : null;
+      const previousPage = page > 1 ? page - 1 : null;
+      const lastPage = Math.ceil(total / limit);
+
       const paginationResult: PaginationResult = {
         totalElements: total,
-        hasNextPage: limit * page < total,
-        nextPage: page + 1,
-        previousPage: page - 1,
-        lastPage: Math.ceil(total / limit),
+        hasNextPage,
+        nextPage,
+        previousPage,
+        lastPage,
       };
 
       return {
@@ -156,13 +161,19 @@ export function BaseService<M>(
 
       const totalDocuments = total.length > 0 ? total[0].total : 0;
 
+      const hasNextPage = totalDocuments > page * limit;
+      const nextPage = hasNextPage ? page + 1 : null;
+      const previousPage = page > 1 ? page - 1 : null;
+      const lastPage = Math.ceil(totalDocuments / limit);
+
       const paginationResult: PaginationResult = {
         totalElements: totalDocuments,
-        hasNextPage: limit * page < totalDocuments,
-        nextPage: page + 1,
-        previousPage: page - 1,
-        lastPage: Math.ceil(totalDocuments / limit),
+        hasNextPage,
+        nextPage,
+        previousPage,
+        lastPage,
       };
+
       return {
         elements,
         pagination: paginationResult,
