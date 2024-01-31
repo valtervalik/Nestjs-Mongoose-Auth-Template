@@ -6,10 +6,11 @@ import {
   Param,
   Patch,
   Post,
+  Query,
 } from '@nestjs/common';
-import { Permissions } from 'src/auth/authorization/decorators/permissions.decorator';
 import { Roles } from 'src/auth/authorization/decorators/roles.decorator';
-import { Permission } from 'src/auth/authorization/permission.type';
+import { ActiveUser } from 'src/auth/decorators/active-user.decorator';
+import { ActiveUserData } from 'src/auth/interfaces/active-user-data.interface';
 import { UserRoles } from 'src/users/enums/user-roles.enum';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
@@ -20,33 +21,40 @@ import { UsersService } from './users.service';
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
 
-  @Permissions(Permission.CreateUser)
   @Post()
-  create(@Body() createUserDto: CreateUserDto) {
-    return this.usersService.create(createUserDto);
+  create(
+    @Body() createUserDto: CreateUserDto,
+    @ActiveUser() activeUser: ActiveUserData,
+  ) {
+    const password = this.usersService.generatePassword(12);
+
+    return this.usersService.create({ ...createUserDto, password }, activeUser);
   }
 
-  @Permissions(Permission.ReadUser)
   @Get()
-  findAll() {
-    return this.usersService.findAllWithoutPagination({});
+  findAll(@Query() { page = '1', limit = '10' }) {
+    return this.usersService.findAll(
+      {},
+      { page: parseInt(page), limit: parseInt(limit) },
+    );
   }
 
-  @Permissions(Permission.ReadUser)
   @Get(':id')
   findById(@Param('id') id: string) {
     return this.usersService.findById(id);
   }
 
-  @Permissions(Permission.UpdateUser)
   @Patch(':id')
-  update(@Param('id') id: string, @Body() updateUserDto: UpdateUserDto) {
-    return this.usersService.update(id, updateUserDto);
+  update(
+    @Param('id') id: string,
+    @Body() updateUserDto: UpdateUserDto,
+    @ActiveUser() activeUser: ActiveUserData,
+  ) {
+    return this.usersService.update(id, updateUserDto, activeUser);
   }
 
-  @Permissions(Permission.DeleteUser)
   @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.usersService.remove(id);
+  remove(@Param('id') id: string, @ActiveUser() activeUser: ActiveUserData) {
+    return this.usersService.remove(id, activeUser);
   }
 }
