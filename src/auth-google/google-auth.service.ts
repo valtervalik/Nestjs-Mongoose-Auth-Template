@@ -9,8 +9,8 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Response } from 'express';
 import { OAuth2Client } from 'google-auth-library';
 import { Model } from 'mongoose';
+import { AuthenticationService } from 'src/auth/authentication/authentication.service';
 import { User, UserDocument } from 'src/users/schemas/user.schema';
-import { AuthenticationService } from '../../authentication.service';
 
 @Injectable()
 export class GoogleAuthService implements OnModuleInit {
