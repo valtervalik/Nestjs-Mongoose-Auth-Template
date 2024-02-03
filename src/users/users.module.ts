@@ -16,7 +16,7 @@ import { UsersService } from './users.service';
 
           schema.pre<UserDocument>('save', async function () {
             const doc = this;
-            if (doc) {
+            if (doc.password) {
               doc.password = await hashingService.hash(doc.password);
             }
           });
