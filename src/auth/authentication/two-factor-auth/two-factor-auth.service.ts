@@ -7,7 +7,7 @@ import { EncryptingService } from 'src/common/encrypting/encrypting.service';
 import { User, UserDocument } from 'src/users/schemas/user.schema';
 
 @Injectable()
-export class TFAAuthService {
+export class TwoFactorAuthService {
   constructor(
     private readonly configService: ConfigService,
     private readonly encryptingService: EncryptingService,
