@@ -10,6 +10,7 @@ import { Response } from 'express';
 import { OAuth2Client } from 'google-auth-library';
 import { Model } from 'mongoose';
 import { AuthenticationService } from 'src/auth/authentication/authentication.service';
+import { TypedEventEmitter } from 'src/types/typed-event-emitter/typed-event-emitter.class';
 import { User, UserDocument } from 'src/users/schemas/user.schema';
 
 @Injectable()
@@ -20,6 +21,7 @@ export class GoogleAuthService implements OnModuleInit {
     private readonly configService: ConfigService,
     private readonly authenticationService: AuthenticationService,
     @InjectModel(User.name) private readonly userModel: Model<UserDocument>,
+    private readonly eventEmitter: TypedEventEmitter,
   ) {}
 
   onModuleInit() {
@@ -41,6 +43,11 @@ export class GoogleAuthService implements OnModuleInit {
       } else {
         const newUser = new this.userModel({ email, googleId });
         await newUser.save();
+
+        this.eventEmitter.emit('user.welcome', {
+          email: newUser.email,
+        });
+
         return this.authenticationService.generateTokens(newUser, response);
       }
     } catch (err) {
