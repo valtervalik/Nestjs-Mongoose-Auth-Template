@@ -30,21 +30,21 @@ export interface IBaseService<M> {
 
   findOne(conditions: Params): Promise<M>;
 
+  exists(conditions: Params): Promise<boolean>;
+
   update(
     id: string,
     updateDto: Params,
     activeUser?: ActiveUserData,
   ): Promise<M>;
 
-  exists(conditions: Params): Promise<boolean>;
-
-  remove(id: string, activeUser?: ActiveUserData): Promise<any>;
-
   updateMany(
     ids: string[],
     conditions: Params,
     activeUser?: ActiveUserData,
   ): Promise<any>;
+
+  remove(id: string, activeUser?: ActiveUserData): Promise<any>;
 
   removeMany(ids: string[], activeUser?: ActiveUserData): Promise<any>;
 
@@ -70,6 +70,10 @@ export interface PaginationResult {
 
 export interface Params {
   [key: string]: any;
+}
+
+export interface CustomUpdateOptions {
+  new: boolean;
 }
 
 export const DEFAULT_PAGINATION: Pagination = { page: 1, limit: 10 };
