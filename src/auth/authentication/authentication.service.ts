@@ -8,7 +8,6 @@ import { User, UserDocument } from 'src/users/schemas/user.schema';
 import { HashingService } from '../../common/hashing/hashing.service';
 import jwtConfig from '../config/jwt.config';
 import { ActiveUserData } from '../interfaces/active-user-data.interface';
-import { SignInDto } from './dto/sign-in.dto';
 import {
   InvalidateRefreshTokenError,
   RefreshTokenIdsStorage,
@@ -30,46 +29,6 @@ export class AuthenticationService extends BaseService<UserDocument>(
     super();
   }
 
-  async signIn(signInDto: SignInDto, response: Response) {
-    const user = await this.model
-      .findOne({ email: signInDto.email })
-      .populate('role')
-      .populate('permission')
-      .select('+password');
-
-    if (!user) {
-      throw new UnauthorizedException('Bad credentials');
-    }
-
-    if (!user.password) {
-      if (user.googleId) {
-        throw new UnauthorizedException('Please login with google');
-      }
-      throw new UnauthorizedException();
-    }
-
-    const isEqual = await this.hashingService.compare(
-      signInDto.password,
-      user.password,
-    );
-
-    if (!isEqual) {
-      throw new UnauthorizedException('Bad credentials');
-    }
-
-    if (
-      user.isTFAEnabled &&
-      !(await this.twoFactorAuthService.verifyCode(
-        signInDto.tfaCode,
-        user.tfaSecret,
-      ))
-    ) {
-      throw new UnauthorizedException('Invalid 2FA code');
-    }
-
-    return await this.generateTokens(user, response);
-  }
-
   async refreshToken(refreshToken: string, response: Response) {
     try {
       const { sub, refreshTokenId } = await this.jwtService.verifyAsync<
@@ -82,8 +41,7 @@ export class AuthenticationService extends BaseService<UserDocument>(
 
       const user = await this.model
         .findById(sub)
-        .populate('role')
-        .populate('permission');
+        .populate(['role', 'permission']);
 
       const isValid = await this.refreshTokenIdsStorage.validate(
         user.id,
@@ -143,5 +101,42 @@ export class AuthenticationService extends BaseService<UserDocument>(
       secure: true,
     });
     return { accessToken };
+  }
+
+  async validateUser(
+    email: string,
+    password: string,
+    tfaCode?: string,
+  ): Promise<User> {
+    const user = await this.model
+      .findOne({ email })
+      .populate(['role', 'permission'])
+      .select('+password');
+
+    if (!user) {
+      throw new UnauthorizedException('Bad credentials');
+    }
+
+    if (!user.password) {
+      if (user.googleId) {
+        throw new UnauthorizedException('Please login with google');
+      }
+      throw new UnauthorizedException();
+    }
+
+    const isEqual = await this.hashingService.compare(password, user.password);
+
+    if (!isEqual) {
+      throw new UnauthorizedException('Bad credentials');
+    }
+
+    if (
+      user.isTFAEnabled &&
+      !(await this.twoFactorAuthService.verifyCode(tfaCode, user.tfaSecret))
+    ) {
+      throw new UnauthorizedException('Invalid 2FA code');
+    }
+
+    return user;
   }
 }
