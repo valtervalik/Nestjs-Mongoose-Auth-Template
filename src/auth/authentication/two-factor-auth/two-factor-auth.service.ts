@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
@@ -32,12 +32,21 @@ export class TwoFactorAuthService {
     const encrypted = await this.encryptingService.encrypt(secret);
 
     try {
-      await this.userModel.findOneAndUpdate(
+      await this.userModel.updateOne(
         { email },
         { tfaSecret: encrypted, isTFAEnabled: true },
       );
     } catch {
-      throw new BadRequestException('No user found');
+      throw new NotFoundException('No user found');
+    }
+  }
+
+  async disableTFAForUser(email: string) {
+    try {
+      await this.userModel.updateOne({ email }, { isTFAEnabled: false });
+      return;
+    } catch {
+      throw new NotFoundException('No user found');
     }
   }
 }
