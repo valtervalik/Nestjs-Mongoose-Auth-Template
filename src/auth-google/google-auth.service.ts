@@ -10,7 +10,7 @@ import { Response } from 'express';
 import { OAuth2Client } from 'google-auth-library';
 import { Model } from 'mongoose';
 import { AuthenticationService } from 'src/auth/authentication/authentication.service';
-import { TypedEventEmitter } from 'src/types/typed-event-emitter/typed-event-emitter.class';
+import { TypedEventEmitter } from 'src/common/types/typed-event-emitter/typed-event-emitter.class';
 import { User, UserDocument } from 'src/users/schemas/user.schema';
 
 @Injectable()
