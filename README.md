@@ -18,13 +18,14 @@ In addition to these features, this template provides Two Factor Authentication 
 1. **Clone the repository**: Use git clone command to clone the repository to your local machine.
 
 ```bash
-git clone https://github.com/valtervalik/Nestjs-auth-template.git
+git clone --depth 1 https://github.com/valtervalik/Nestjs-Mongoose-Auth-Template.git my-app
 ```
 
-2. **Enter the project folder**:
+2. **Enter the project folder and copy .env.example as .env**:
 
 ```bash
-cd Nestjs-auth-template
+cd my-app
+cp .env.example .env
 ```
 
 3. **Install dependencies**: Run any of the following commands to install all the necessary dependencies.
@@ -45,9 +46,7 @@ pnpm install
 docker-compose up -d
 ```
 
-5. **Set your environment variables**: Set up your environment variables based on the `.env.example` file in the repository.
-
-6. **Run the application in development mode**: Use any of the following commands to start the application in development mode.
+5. **Run the application in development mode**: Use any of the following commands to start the application in development mode.
 
 ```bash
 npm run start:dev
