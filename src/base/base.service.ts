@@ -257,8 +257,8 @@ export function BaseService<M>(
     public async update(
       id: string,
       updateDto: Params,
+      options: CustomUpdateOptions,
       activeUser?: ActiveUserData,
-      otp: CustomUpdateOptions = { new: false },
     ): Promise<M | any> {
       try {
         return activeUser
@@ -266,11 +266,11 @@ export function BaseService<M>(
               { _id: id },
               { ...updateDto, updatedBy: activeUser.sub },
               {
-                new: otp.new,
+                new: options.new,
               },
             )
           : await this.model.findOneAndUpdate({ _id: id }, updateDto, {
-              new: otp.new,
+              new: options.new,
             });
       } catch (err) {
         throw new ConflictException(err.message);
@@ -280,8 +280,8 @@ export function BaseService<M>(
     public async updateMany(
       ids: string[],
       conditions: Params,
+      options: CustomUpdateOptions,
       activeUser?: ActiveUserData,
-      otp: CustomUpdateOptions = { new: false },
     ): Promise<M[] | any> {
       try {
         activeUser
@@ -294,7 +294,7 @@ export function BaseService<M>(
               { $set: conditions },
             );
 
-        if (otp.new) {
+        if (options.new) {
           return await this.model.find({ _id: { $in: ids } });
         }
       } catch (err) {
@@ -306,16 +306,22 @@ export function BaseService<M>(
       try {
         if (softDelete) {
           if (activeUser) {
-            return await this.update(id, {
+            return await this.model.updateOne(
+              { _id: id },
+              {
+                deleted: true,
+                deletedAt: new Date(),
+                deletedBy: activeUser.sub,
+              },
+            );
+          }
+          return await this.model.updateOne(
+            { _id: id },
+            {
               deleted: true,
               deletedAt: new Date(),
-              deletedBy: activeUser.sub,
-            });
-          }
-          return await this.update(id, {
-            deleted: true,
-            deletedAt: new Date(),
-          });
+            },
+          );
         }
         return await this.model.deleteOne({ _id: id });
       } catch (err) {
@@ -363,15 +369,21 @@ export function BaseService<M>(
     ): Promise<any> {
       try {
         return activeUser
-          ? await this.update(id, {
-              deleted: false,
-              restoredAt: new Date(),
-              restoredBy: activeUser.sub,
-            })
-          : await this.update(id, {
-              deleted: false,
-              restoredAt: new Date(),
-            });
+          ? await this.model.updateOne(
+              { _id: id },
+              {
+                deleted: false,
+                restoredAt: new Date(),
+                restoredBy: activeUser.sub,
+              },
+            )
+          : await this.model.updateOne(
+              { _id: id },
+              {
+                deleted: false,
+                restoredAt: new Date(),
+              },
+            );
       } catch (err) {
         throw new ConflictException(err.message);
       }

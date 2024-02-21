@@ -35,12 +35,14 @@ export interface IBaseService<M> {
   update(
     id: string,
     updateDto: Params,
+    options: CustomUpdateOptions,
     activeUser?: ActiveUserData,
   ): Promise<M>;
 
   updateMany(
     ids: string[],
     conditions: Params,
+    options: CustomUpdateOptions,
     activeUser?: ActiveUserData,
   ): Promise<any>;
 
