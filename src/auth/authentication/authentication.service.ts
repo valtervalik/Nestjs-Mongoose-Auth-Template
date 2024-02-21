@@ -105,7 +105,7 @@ export class AuthenticationService extends BaseService<UserDocument>(
 
   async validateUser(
     email: string,
-    password: string,
+    pass: string,
     tfaCode?: string,
   ): Promise<User> {
     const user = await this.model
@@ -124,7 +124,7 @@ export class AuthenticationService extends BaseService<UserDocument>(
       throw new UnauthorizedException();
     }
 
-    const isEqual = await this.hashingService.compare(password, user.password);
+    const isEqual = await this.hashingService.compare(pass, user.password);
 
     if (!isEqual) {
       throw new UnauthorizedException('Bad credentials');
@@ -137,6 +137,8 @@ export class AuthenticationService extends BaseService<UserDocument>(
       throw new UnauthorizedException('Invalid 2FA code');
     }
 
-    return user;
+    const { password, tfaSecret, ...rest } = user.toObject();
+
+    return rest as UserDocument;
   }
 }
