@@ -3,25 +3,26 @@ import { EjsAdapter } from '@nestjs-modules/mailer/dist/adapters/ejs.adapter';
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { join } from 'path';
+import { AllConfigType } from 'src/config/config.type';
 import { EMailerService } from './e-mailer.service';
 
 @Module({
   imports: [
     MailerModule.forRootAsync({
       imports: [ConfigModule],
-      useFactory: async (configService: ConfigService) => ({
+      useFactory: async (configService: ConfigService<AllConfigType>) => ({
         transport: {
-          service: configService.get<string>('EMAIL_SERVICE'),
+          service: configService.getOrThrow('emailer.service', { infer: true }),
           secure: false,
           auth: {
-            user: configService.get<string>('EMAIL_USER'),
-            pass: configService.get<string>('EMAIL_PASSKEY'),
+            user: configService.getOrThrow('emailer.user', { infer: true }),
+            pass: configService.getOrThrow('emailer.passkey', { infer: true }),
           },
         },
         defaults: {
-          from: `"${configService.get<string>(
-            'EMAIL_USERNAME',
-          )}" <${configService.get<string>('EMAIL_USER')}>`,
+          from: `"${configService.getOrThrow('emailer.username', {
+            infer: true,
+          })}" <${configService.getOrThrow('emailer.user', { infer: true })}>`,
         },
         template: {
           dir: join(__dirname, '/templates'),

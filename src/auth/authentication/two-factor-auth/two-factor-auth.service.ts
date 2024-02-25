@@ -4,19 +4,20 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { authenticator } from 'otplib';
 import { EncryptingService } from 'src/common/encrypting/encrypting.service';
+import { AllConfigType } from 'src/config/config.type';
 import { User, UserDocument } from 'src/users/schemas/user.schema';
 
 @Injectable()
 export class TwoFactorAuthService {
   constructor(
-    private readonly configService: ConfigService,
+    private readonly configService: ConfigService<AllConfigType>,
     private readonly encryptingService: EncryptingService,
     @InjectModel(User.name) private readonly userModel: Model<UserDocument>,
   ) {}
 
   async generateSecret(email: string) {
     const secret = authenticator.generateSecret();
-    const appName = this.configService.getOrThrow('TFA_APP_NAME');
+    const appName = this.configService.getOrThrow('app.name', { infer: true });
     const uri = authenticator.keyuri(email, appName, secret);
 
     return { secret, uri };

@@ -6,7 +6,7 @@ import { Response } from 'express';
 import { BaseService } from 'src/base/base.service';
 import { User, UserDocument } from 'src/users/schemas/user.schema';
 import { HashingService } from '../../common/hashing/hashing.service';
-import jwtConfig from '../config/jwt.config';
+import jwtConfig from '../config/auth.config';
 import { ActiveUserData } from '../interfaces/active-user-data.interface';
 import {
   InvalidateRefreshTokenError,
@@ -96,7 +96,7 @@ export class AuthenticationService extends BaseService<UserDocument>(
 
     response.cookie('refresh_token', refreshToken, {
       httpOnly: true,
-      path: '/auth/refresh-token',
+      path: '/auth/refresh',
       maxAge: this.jwtConfiguration.refreshTokenTTL * 1000,
       secure: true,
     });
