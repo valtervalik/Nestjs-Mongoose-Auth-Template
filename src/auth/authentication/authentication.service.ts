@@ -1,12 +1,12 @@
-import { Inject, Injectable, UnauthorizedException } from '@nestjs/common';
-import { ConfigType } from '@nestjs/config';
+import { Injectable, UnauthorizedException } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import { randomUUID } from 'crypto';
 import { Response } from 'express';
 import { BaseService } from 'src/base/base.service';
+import { AllConfigType } from 'src/config/config.type';
 import { User, UserDocument } from 'src/users/schemas/user.schema';
 import { HashingService } from '../../common/hashing/hashing.service';
-import jwtConfig from '../config/auth.config';
 import { ActiveUserData } from '../interfaces/active-user-data.interface';
 import {
   InvalidateRefreshTokenError,
@@ -21,8 +21,7 @@ export class AuthenticationService extends BaseService<UserDocument>(
   constructor(
     private readonly hashingService: HashingService,
     private readonly jwtService: JwtService,
-    @Inject(jwtConfig.KEY)
-    private readonly jwtConfiguration: ConfigType<typeof jwtConfig>,
+    private readonly configService: ConfigService<AllConfigType>,
     private readonly refreshTokenIdsStorage: RefreshTokenIdsStorage,
     private readonly twoFactorAuthService: TwoFactorAuthService,
   ) {
@@ -34,9 +33,9 @@ export class AuthenticationService extends BaseService<UserDocument>(
       const { sub, refreshTokenId } = await this.jwtService.verifyAsync<
         Pick<ActiveUserData, 'sub'> & { refreshTokenId: string }
       >(refreshToken, {
-        secret: this.jwtConfiguration.secret,
-        audience: this.jwtConfiguration.audience,
-        issuer: this.jwtConfiguration.issuer,
+        secret: this.configService.get('auth.secret', { infer: true }),
+        audience: this.configService.get('auth.audience', { infer: true }),
+        issuer: this.configService.get('auth.issuer', { infer: true }),
       });
 
       const user = await this.model
@@ -72,9 +71,9 @@ export class AuthenticationService extends BaseService<UserDocument>(
         ...payload,
       },
       {
-        audience: this.jwtConfiguration.audience,
-        issuer: this.jwtConfiguration.issuer,
-        secret: this.jwtConfiguration.secret,
+        audience: this.configService.get('auth.audience', { infer: true }),
+        issuer: this.configService.get('auth.issuer', { infer: true }),
+        secret: this.configService.get('auth.secret', { infer: true }),
         expiresIn,
       },
     );
@@ -85,19 +84,24 @@ export class AuthenticationService extends BaseService<UserDocument>(
     const [accessToken, refreshToken] = await Promise.all([
       this.signToken<Partial<ActiveUserData>>(
         user._id,
-        this.jwtConfiguration.accessTokenTTL,
+        this.configService.get('auth.accessTokenTTL', { infer: true }),
         { email: user.email, role: user.role, permission: user.permission },
       ),
-      this.signToken(user._id, this.jwtConfiguration.refreshTokenTTL, {
-        refreshTokenId,
-      }),
+      this.signToken(
+        user._id,
+        this.configService.get('auth.refreshTokenTTL', { infer: true }),
+        {
+          refreshTokenId,
+        },
+      ),
     ]);
     await this.refreshTokenIdsStorage.insert(user._id, refreshTokenId);
 
     response.cookie('refresh_token', refreshToken, {
       httpOnly: true,
       path: '/auth/refresh',
-      maxAge: this.jwtConfiguration.refreshTokenTTL * 1000,
+      maxAge:
+        this.configService.get('auth.refreshTokenTTL', { infer: true }) * 1000,
       secure: true,
     });
     return { accessToken };
