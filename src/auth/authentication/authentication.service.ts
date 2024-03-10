@@ -33,7 +33,9 @@ export class AuthenticationService extends BaseService<UserDocument>(
       const { sub, refreshTokenId } = await this.jwtService.verifyAsync<
         Pick<ActiveUserData, 'sub'> & { refreshTokenId: string }
       >(refreshToken, {
-        secret: this.configService.get('auth.secret', { infer: true }),
+        secret: this.configService.get('auth.refreshTokenSecret', {
+          infer: true,
+        }),
         audience: this.configService.get('auth.audience', { infer: true }),
         issuer: this.configService.get('auth.issuer', { infer: true }),
       });
@@ -64,7 +66,11 @@ export class AuthenticationService extends BaseService<UserDocument>(
     }
   }
 
-  private async signToken<T>(userId: string, expiresIn: number, payload?: T) {
+  private async signAccessToken<T>(
+    userId: number,
+    expiresIn: number,
+    payload?: T,
+  ) {
     return await this.jwtService.signAsync(
       {
         sub: userId,
@@ -79,15 +85,35 @@ export class AuthenticationService extends BaseService<UserDocument>(
     );
   }
 
+  private async signRefreshToken<T>(
+    userId: number,
+    expiresIn: number,
+    payload?: T,
+  ) {
+    return await this.jwtService.signAsync(
+      {
+        sub: userId,
+        ...payload,
+      },
+      {
+        audience: this.configService.get('auth.audience', { infer: true }),
+        issuer: this.configService.get('auth.issuer', { infer: true }),
+        secret: this.configService.get('auth.refreshTokenSecret', {
+          infer: true,
+        }),
+        expiresIn,
+      },
+    );
+  }
   async generateTokens(user: User, response: Response) {
     const refreshTokenId = randomUUID();
     const [accessToken, refreshToken] = await Promise.all([
-      this.signToken<Partial<ActiveUserData>>(
+      this.signAccessToken<Partial<ActiveUserData>>(
         user._id,
         this.configService.get('auth.accessTokenTTL', { infer: true }),
         { email: user.email, role: user.role, permission: user.permission },
       ),
-      this.signToken(
+      this.signRefreshToken(
         user._id,
         this.configService.get('auth.refreshTokenTTL', { infer: true }),
         {
