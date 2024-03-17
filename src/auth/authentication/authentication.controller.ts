@@ -14,6 +14,7 @@ import { toFileStream } from 'qrcode';
 import { TypedEventEmitter } from 'src/common/types/typed-event-emitter/typed-event-emitter.class';
 import { UserDocument } from 'src/users/schemas/user.schema';
 import { apiResponseHandler } from 'src/utils/ApiResponseHandler';
+import { REFRESH_TOKEN_KEY } from '../auth.constants';
 import { ActiveUser } from '../decorators/active-user.decorator';
 import { ActiveUserData } from '../interfaces/active-user-data.interface';
 import { AuthenticationService } from './authentication.service';
@@ -64,7 +65,7 @@ export class AuthenticationController {
     @Req() request: Request,
     @Res({ passthrough: true }) response: Response,
   ) {
-    const refreshToken = request.cookies['refresh_token'];
+    const refreshToken = request.cookies[REFRESH_TOKEN_KEY];
     return this.authenticationService.refreshToken(refreshToken, response);
   }
 
@@ -98,7 +99,7 @@ export class AuthenticationController {
 
   @Get('logout')
   logout(@Res({ passthrough: true }) response: Response) {
-    response.clearCookie('refresh_token');
+    response.clearCookie(REFRESH_TOKEN_KEY);
     return apiResponseHandler('Logout successful', 200);
   }
 }

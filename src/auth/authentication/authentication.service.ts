@@ -7,6 +7,7 @@ import { BaseService } from 'src/base/base.service';
 import { AllConfigType } from 'src/config/config.type';
 import { User, UserDocument } from 'src/users/schemas/user.schema';
 import { HashingService } from '../../common/hashing/hashing.service';
+import { REFRESH_TOKEN_KEY } from '../auth.constants';
 import { ActiveUserData } from '../interfaces/active-user-data.interface';
 import {
   InvalidateRefreshTokenError,
@@ -123,7 +124,7 @@ export class AuthenticationService extends BaseService<UserDocument>(
     ]);
     await this.refreshTokenIdsStorage.insert(user._id, refreshTokenId);
 
-    response.cookie('refresh_token', refreshToken, {
+    response.cookie(REFRESH_TOKEN_KEY, refreshToken, {
       httpOnly: true,
       path: '/',
       maxAge:
