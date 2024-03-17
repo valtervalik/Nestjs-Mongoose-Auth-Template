@@ -1,32 +1,33 @@
 import { registerAs } from '@nestjs/config';
-import { IsInt, IsOptional, IsString, Max, Min } from 'class-validator';
+import { IsString, ValidateIf } from 'class-validator';
+import { DatabaseConfig } from 'src/database/config/database-config.type';
 import validateConfig from '../../utils/validate-config';
-import { DatabaseConfig } from './database-config.type';
 
 class EnvironmentVariablesValidator {
+  @ValidateIf((envValues) => envValues.DATABASE_URL)
   @IsString()
-  DB_HOST: string;
+  DATABASE_URL: string;
 
-  @IsInt()
-  @Min(0)
-  @Max(65535)
-  @IsOptional()
-  DB_PORT: number;
-
+  @ValidateIf((envValues) => !envValues.DATABASE_URL)
   @IsString()
-  DB_URI: string;
+  DATABASE_USERNAME: string;
 
+  @ValidateIf((envValues) => !envValues.DATABASE_URL)
   @IsString()
-  DB_NAME: string;
+  DATABASE_PASSWORD: string;
+
+  @ValidateIf((envValues) => !envValues.DATABASE_URL)
+  @IsString()
+  DATABASE_NAME: string;
 }
 
 export default registerAs<DatabaseConfig>('database', () => {
   validateConfig(process.env, EnvironmentVariablesValidator);
 
   return {
-    host: process.env.DB_HOST,
-    port: process.env.DB_PORT ? parseInt(process.env.DB_PORT, 10) : 27017,
-    uri: process.env.DB_URI,
-    name: process.env.DB_NAME,
+    url: process.env.DATABASE_URL,
+    username: process.env.DATABASE_USERNAME,
+    password: process.env.DATABASE_PASSWORD,
+    name: process.env.DATABASE_NAME,
   };
 });
