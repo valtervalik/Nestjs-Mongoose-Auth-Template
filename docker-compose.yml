@@ -11,7 +11,7 @@ services:
     image: mongo:7.0.5
     restart: always
     ports:
-      - '${DB_PORT}:27017'
+      - '${DATABASE_PORT}:27017'
     volumes:
       - nestjs-template-mongo-db:/data/db
 
