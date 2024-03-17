@@ -13,6 +13,7 @@ import { Request, Response } from 'express';
 import { toFileStream } from 'qrcode';
 import { TypedEventEmitter } from 'src/common/types/typed-event-emitter/typed-event-emitter.class';
 import { UserDocument } from 'src/users/schemas/user.schema';
+import { apiResponseHandler } from 'src/utils/ApiResponseHandler';
 import { ActiveUser } from '../decorators/active-user.decorator';
 import { ActiveUserData } from '../interfaces/active-user-data.interface';
 import { AuthenticationService } from './authentication.service';
@@ -39,7 +40,7 @@ export class AuthenticationController {
       email: signUpDto.email,
     });
 
-    return user;
+    return apiResponseHandler('User registered successfully', 201, user);
   }
 
   @UseGuards(LocalAuthGuard)
@@ -49,10 +50,12 @@ export class AuthenticationController {
     @Req() request: Request,
     @Res({ passthrough: true }) response: Response,
   ) {
-    return await this.authenticationService.generateTokens(
+    const accessToken = await this.authenticationService.generateTokens(
       request.user as UserDocument,
       response,
     );
+
+    return apiResponseHandler('Login successful', 200, accessToken);
   }
 
   @HttpCode(HttpStatus.OK)
@@ -85,12 +88,17 @@ export class AuthenticationController {
   @HttpCode(HttpStatus.OK)
   @Post('2fa/disable')
   async disableTFA(@ActiveUser() activeUser: ActiveUserData) {
-    return await this.twoFactorAuthService.disableTFAForUser(activeUser.email);
+    await this.twoFactorAuthService.disableTFAForUser(activeUser.email);
+
+    return apiResponseHandler(
+      'Two-factor authentication disabled successfully',
+      200,
+    );
   }
 
   @Get('logout')
   logout(@Res({ passthrough: true }) response: Response) {
-    response.clearCookie('refresh_token', { path: '/auth/refresh' });
-    return { message: 'Logout successful' };
+    response.clearCookie('refresh_token');
+    return apiResponseHandler('Logout successful', 200);
   }
 }
