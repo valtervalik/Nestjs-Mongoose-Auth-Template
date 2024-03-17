@@ -125,7 +125,7 @@ export class AuthenticationService extends BaseService<UserDocument>(
 
     response.cookie('refresh_token', refreshToken, {
       httpOnly: true,
-      path: '/auth/refresh',
+      path: '/',
       maxAge:
         this.configService.get('auth.refreshTokenTTL', { infer: true }) * 1000,
       secure: true,
