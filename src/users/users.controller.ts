@@ -68,7 +68,7 @@ export class UsersController {
     @Param('id') id: string,
     @ActiveUser() activeUser: ActiveUserData,
   ) {
-    await this.usersService.remove(id, activeUser);
+    await this.usersService.remove(id);
 
     return apiResponseHandler('User deleted successfully', 200);
   }
