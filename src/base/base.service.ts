@@ -13,18 +13,11 @@ import {
   Pagination,
   PaginationResult,
   Params,
-} from './interfaces';
-
-type BaseServiceOptions = {
-  softDelete?: boolean;
-};
+} from './base-interfaces';
 
 export function BaseService<M>(
   modelClass: string | any,
-  options: BaseServiceOptions = {},
 ): Type<IBaseService<M>> {
-  const { softDelete = true } = options;
-
   @Injectable()
   class BaseServiceClass implements IBaseService<M> {
     @InjectModel(modelClass) public model: Model<M | any>;
@@ -302,65 +295,70 @@ export function BaseService<M>(
       }
     }
 
-    public async remove(id: string, activeUser?: ActiveUserData): Promise<any> {
+    public async remove(id: string): Promise<any> {
       try {
-        if (softDelete) {
-          if (activeUser) {
-            return await this.model.updateOne(
-              { _id: id },
-              {
-                deleted: true,
-                deletedAt: new Date(),
-                deletedBy: activeUser.sub,
-              },
-            );
-          }
-          return await this.model.updateOne(
-            { _id: id },
-            {
-              deleted: true,
-              deletedAt: new Date(),
-            },
-          );
-        }
         return await this.model.deleteOne({ _id: id });
       } catch (err) {
         throw new ConflictException(err.message);
       }
     }
 
-    public async removeMany(
-      ids: string[],
-      activeUser?: ActiveUserData,
-    ): Promise<any> {
+    public async removeMany(ids: string[]): Promise<any> {
       try {
-        if (softDelete) {
-          if (activeUser) {
-            return await this.model.updateMany(
-              { _id: { $in: ids } },
-              {
-                $set: {
-                  deleted: true,
-                  deletedAt: new Date(),
-                  deletedBy: activeUser.sub,
-                },
-              },
-            );
-          }
-          return await this.model.updateMany(
-            { _id: { $in: ids } },
-            {
-              $set: {
-                deleted: true,
-                deletedAt: new Date(),
-              },
-            },
-          );
-        }
         return await this.model.deleteMany({ _id: { $in: ids } });
       } catch (err) {
         throw new ConflictException(err.message);
       }
+    }
+
+    public async softRemove(
+      id: string,
+      activeUser?: ActiveUserData,
+    ): Promise<any> {
+      if (activeUser) {
+        return await this.model.updateOne(
+          { _id: id },
+          {
+            deleted: true,
+            deletedAt: new Date(),
+            deletedBy: activeUser.sub,
+          },
+        );
+      }
+      return await this.model.updateOne(
+        { _id: id },
+        {
+          deleted: true,
+          deletedAt: new Date(),
+        },
+      );
+    }
+
+    public async softRemoveMany(
+      ids: string[],
+      activeUser?: ActiveUserData,
+    ): Promise<any> {
+      if (activeUser) {
+        return await this.model.updateMany(
+          { _id: { $in: ids } },
+          {
+            $set: {
+              deleted: true,
+              deletedAt: new Date(),
+              deletedBy: activeUser.sub,
+            },
+          },
+        );
+      }
+      return await this.model.updateMany(
+        { _id: { $in: ids } },
+        {
+          $set: {
+            deleted: true,
+            deletedAt: new Date(),
+          },
+        },
+      );
     }
 
     public async restore(
