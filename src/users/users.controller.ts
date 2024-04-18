@@ -3,6 +3,7 @@ import {
   Controller,
   Delete,
   Get,
+  HttpStatus,
   Param,
   Patch,
   Post,
@@ -34,7 +35,11 @@ export class UsersController {
       activeUser,
     );
 
-    return apiResponseHandler('User created successfully', 201, newUser);
+    return apiResponseHandler(
+      'User created successfully',
+      HttpStatus.CREATED,
+      newUser,
+    );
   }
 
   @Get()
@@ -60,7 +65,11 @@ export class UsersController {
       activeUser,
     );
 
-    return apiResponseHandler('User updated successfully', 200, updatedUser);
+    return apiResponseHandler(
+      'User updated successfully',
+      HttpStatus.OK,
+      updatedUser,
+    );
   }
 
   @Delete(':id')
@@ -70,6 +79,6 @@ export class UsersController {
   ) {
     await this.usersService.remove(id);
 
-    return apiResponseHandler('User deleted successfully', 200);
+    return apiResponseHandler('User deleted successfully', HttpStatus.OK);
   }
 }
