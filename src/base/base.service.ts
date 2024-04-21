@@ -30,11 +30,11 @@ export function BaseService<M>(
         return activeUser
           ? await this.model.create({ ...createDto, createdBy: activeUser.sub })
           : await this.model.create(createDto);
-      } catch (e) {
-        if (e.code === 11000) {
+      } catch (err) {
+        if (err.code === 11000) {
           throw new ConflictException('Document already exists');
         }
-        throw e;
+        throw err;
       }
     }
 
@@ -315,50 +315,58 @@ export function BaseService<M>(
       id: string,
       activeUser?: ActiveUserData,
     ): Promise<any> {
-      if (activeUser) {
+      try {
+        if (activeUser) {
+          return await this.model.updateOne(
+            { _id: id },
+            {
+              deleted: true,
+              deletedAt: new Date(),
+              deletedBy: activeUser.sub,
+            },
+          );
+        }
         return await this.model.updateOne(
           { _id: id },
           {
             deleted: true,
             deletedAt: new Date(),
-            deletedBy: activeUser.sub,
           },
         );
+      } catch (err) {
+        throw new ConflictException(err.message);
       }
-      return await this.model.updateOne(
-        { _id: id },
-        {
-          deleted: true,
-          deletedAt: new Date(),
-        },
-      );
     }
 
     public async softRemoveMany(
       ids: string[],
       activeUser?: ActiveUserData,
     ): Promise<any> {
-      if (activeUser) {
+      try {
+        if (activeUser) {
+          return await this.model.updateMany(
+            { _id: { $in: ids } },
+            {
+              $set: {
+                deleted: true,
+                deletedAt: new Date(),
+                deletedBy: activeUser.sub,
+              },
+            },
+          );
+        }
         return await this.model.updateMany(
           { _id: { $in: ids } },
           {
             $set: {
               deleted: true,
               deletedAt: new Date(),
-              deletedBy: activeUser.sub,
             },
           },
         );
+      } catch (err) {
+        throw new ConflictException(err.message);
       }
-      return await this.model.updateMany(
-        { _id: { $in: ids } },
-        {
-          $set: {
-            deleted: true,
-            deletedAt: new Date(),
-          },
-        },
-      );
     }
 
     public async restore(
