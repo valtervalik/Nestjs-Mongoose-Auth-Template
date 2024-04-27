@@ -2,6 +2,7 @@ import {
   BadRequestException,
   ConflictException,
   Injectable,
+  Logger,
   Type,
 } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
@@ -20,6 +21,7 @@ export function BaseService<M>(
 ): Type<IBaseService<M>> {
   @Injectable()
   class BaseServiceClass implements IBaseService<M> {
+    private readonly logger = new Logger(BaseServiceClass.name);
     @InjectModel(modelClass) public model: Model<M | any>;
 
     public async create(
@@ -32,8 +34,10 @@ export function BaseService<M>(
           : await this.model.create(createDto);
       } catch (err) {
         if (err.code === 11000) {
+          this.logger.error(err);
           throw new ConflictException('Document already exists');
         }
+        this.logger.error(err);
         throw err;
       }
     }
@@ -52,6 +56,7 @@ export function BaseService<M>(
           ? await this.model.create({ ...createDto, createdBy: activeUser.sub })
           : await this.model.create(createDto);
       } catch (err) {
+        this.logger.error(err);
         throw new ConflictException(err.message);
       }
     }
@@ -109,6 +114,7 @@ export function BaseService<M>(
           pagination: paginationResult,
         };
       } catch (err) {
+        this.logger.error(err);
         throw new ConflictException(err.message);
       }
     }
@@ -139,6 +145,7 @@ export function BaseService<M>(
           total,
         };
       } catch (err) {
+        this.logger.error(err);
         throw new ConflictException(err.message);
       }
     }
@@ -186,6 +193,7 @@ export function BaseService<M>(
           pagination: paginationResult,
         };
       } catch (err) {
+        this.logger.error(err);
         throw new ConflictException(err.message);
       }
     }
@@ -199,6 +207,7 @@ export function BaseService<M>(
           );
         return data;
       } catch (err) {
+        this.logger.error(err);
         throw new ConflictException(err.message);
       }
     }
@@ -233,6 +242,7 @@ export function BaseService<M>(
 
         return response;
       } catch (err) {
+        this.logger.error(err);
         throw new ConflictException(err.message);
       }
     }
@@ -243,6 +253,7 @@ export function BaseService<M>(
         const exists = await this.model.exists(where);
         return !!exists;
       } catch (err) {
+        this.logger.error(err);
         throw new ConflictException(err.message);
       }
     }
@@ -266,6 +277,7 @@ export function BaseService<M>(
               new: options.new,
             });
       } catch (err) {
+        this.logger.error(err);
         throw new ConflictException(err.message);
       }
     }
@@ -291,6 +303,7 @@ export function BaseService<M>(
           return await this.model.find({ _id: { $in: ids } });
         }
       } catch (err) {
+        this.logger.error(err);
         throw new ConflictException(err.message);
       }
     }
@@ -299,6 +312,7 @@ export function BaseService<M>(
       try {
         return await this.model.deleteOne({ _id: id });
       } catch (err) {
+        this.logger.error(err);
         throw new ConflictException(err.message);
       }
     }
@@ -307,6 +321,7 @@ export function BaseService<M>(
       try {
         return await this.model.deleteMany({ _id: { $in: ids } });
       } catch (err) {
+        this.logger.error(err);
         throw new ConflictException(err.message);
       }
     }
@@ -334,6 +349,7 @@ export function BaseService<M>(
           },
         );
       } catch (err) {
+        this.logger.error(err);
         throw new ConflictException(err.message);
       }
     }
@@ -365,6 +381,7 @@ export function BaseService<M>(
           },
         );
       } catch (err) {
+        this.logger.error(err);
         throw new ConflictException(err.message);
       }
     }
@@ -391,6 +408,7 @@ export function BaseService<M>(
               },
             );
       } catch (err) {
+        this.logger.error(err);
         throw new ConflictException(err.message);
       }
     }
@@ -421,6 +439,7 @@ export function BaseService<M>(
               },
             );
       } catch (err) {
+        this.logger.error(err);
         throw new ConflictException(err.message);
       }
     }
@@ -430,6 +449,7 @@ export function BaseService<M>(
         const where: Params = { ...conditions, deleted: false };
         return await this.model.countDocuments(where);
       } catch (err) {
+        this.logger.error(err);
         throw new ConflictException(err.message);
       }
     }
