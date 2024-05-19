@@ -8,6 +8,7 @@ import {
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { ActiveUserData } from 'src/auth/interfaces/active-user-data.interface';
+import { NotFoundException } from '@nestjs/common';
 import {
   CustomUpdateOptions,
   IBaseService,
@@ -202,7 +203,7 @@ export function BaseService<M>(
       try {
         const data = await this.model.findById(id);
         if (!data)
-          throw new BadRequestException(
+          throw new NotFoundException(
             `Not found ${this.model.name} with id ${id}`,
           );
         return data;
@@ -233,7 +234,7 @@ export function BaseService<M>(
 
         if (!response) {
           const { deleted, ...updatedWhere } = where;
-          throw new BadRequestException(
+          throw new NotFoundException(
             `Not found ${this.model.name} with params ${JSON.stringify(
               updatedWhere,
             )}`,
