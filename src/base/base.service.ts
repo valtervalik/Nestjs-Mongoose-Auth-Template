@@ -263,7 +263,7 @@ export function BaseService<M>(
       updateDto: Params,
       options: CustomUpdateOptions,
       activeUser?: ActiveUserData,
-    ): Promise<M | any> {
+    ): Promise<void | M> {
       try {
         return activeUser
           ? await this.model.findOneAndUpdate(
@@ -287,7 +287,7 @@ export function BaseService<M>(
       conditions: Params,
       options: CustomUpdateOptions,
       activeUser?: ActiveUserData,
-    ): Promise<M[] | any> {
+    ): Promise<void | M[]> {
       try {
         activeUser
           ? await this.model.updateMany(
@@ -308,18 +308,18 @@ export function BaseService<M>(
       }
     }
 
-    public async remove(id: string): Promise<any> {
+    public async remove(id: string): Promise<void> {
       try {
-        return await this.model.deleteOne({ _id: id });
+        await this.model.deleteOne({ _id: id });
       } catch (err) {
         this.logger.error(err);
         throw new ConflictException(err.message);
       }
     }
 
-    public async removeMany(ids: string[]): Promise<any> {
+    public async removeMany(ids: string[]): Promise<void> {
       try {
-        return await this.model.deleteMany({ _id: { $in: ids } });
+        await this.model.deleteMany({ _id: { $in: ids } });
       } catch (err) {
         this.logger.error(err);
         throw new ConflictException(err.message);
@@ -329,25 +329,23 @@ export function BaseService<M>(
     public async softRemove(
       id: string,
       activeUser?: ActiveUserData,
-    ): Promise<any> {
+    ): Promise<void> {
       try {
-        if (activeUser) {
-          return await this.model.updateOne(
-            { _id: id },
-            {
-              deleted: true,
-              deletedAt: new Date(),
-              deletedBy: activeUser.sub,
-            },
-          );
-        }
-        return await this.model.updateOne(
+        await this.model.updateOne(
           { _id: id },
           {
             deleted: true,
             deletedAt: new Date(),
           },
         );
+        if (activeUser) {
+          await this.model.updateOne(
+            { _id: id },
+            {
+              deletedBy: activeUser.sub,
+            },
+          );
+        }
       } catch (err) {
         this.logger.error(err);
         throw new ConflictException(err.message);
@@ -357,21 +355,9 @@ export function BaseService<M>(
     public async softRemoveMany(
       ids: string[],
       activeUser?: ActiveUserData,
-    ): Promise<any> {
+    ): Promise<void> {
       try {
-        if (activeUser) {
-          return await this.model.updateMany(
-            { _id: { $in: ids } },
-            {
-              $set: {
-                deleted: true,
-                deletedAt: new Date(),
-                deletedBy: activeUser.sub,
-              },
-            },
-          );
-        }
-        return await this.model.updateMany(
+        await this.model.updateMany(
           { _id: { $in: ids } },
           {
             $set: {
@@ -380,6 +366,16 @@ export function BaseService<M>(
             },
           },
         );
+        if (activeUser) {
+          await this.model.updateMany(
+            { _id: { $in: ids } },
+            {
+              $set: {
+                deletedBy: activeUser.sub,
+              },
+            },
+          );
+        }
       } catch (err) {
         this.logger.error(err);
         throw new ConflictException(err.message);
@@ -389,24 +385,23 @@ export function BaseService<M>(
     public async restore(
       id: string,
       activeUser?: ActiveUserData,
-    ): Promise<any> {
+    ): Promise<void> {
       try {
-        return activeUser
-          ? await this.model.updateOne(
-              { _id: id },
-              {
-                deleted: false,
-                restoredAt: new Date(),
-                restoredBy: activeUser.sub,
-              },
-            )
-          : await this.model.updateOne(
-              { _id: id },
-              {
-                deleted: false,
-                restoredAt: new Date(),
-              },
-            );
+        await this.model.updateOne(
+          { _id: id },
+          {
+            deleted: false,
+            restoredAt: new Date(),
+          },
+        );
+        if (activeUser) {
+          await this.model.updateOne(
+            { _id: id },
+            {
+              restoredBy: activeUser.sub,
+            },
+          );
+        }
       } catch (err) {
         this.logger.error(err);
         throw new ConflictException(err.message);
@@ -416,28 +411,27 @@ export function BaseService<M>(
     public async restoreMany(
       ids: string[],
       activeUser?: ActiveUserData,
-    ): Promise<any> {
+    ): Promise<void> {
       try {
-        return activeUser
-          ? await this.model.updateMany(
-              { _id: { $in: ids } },
-              {
-                $set: {
-                  deleted: false,
-                  restoredAt: new Date(),
-                  restoredBy: activeUser.sub,
-                },
+        await this.model.updateMany(
+          { _id: { $in: ids } },
+          {
+            $set: {
+              deleted: false,
+              restoredAt: new Date(),
+            },
+          },
+        );
+        if (activeUser) {
+          await this.model.updateMany(
+            { _id: { $in: ids } },
+            {
+              $set: {
+                restoredBy: activeUser.sub,
               },
-            )
-          : await this.model.updateMany(
-              { _id: { $in: ids } },
-              {
-                $set: {
-                  deleted: false,
-                  restoredAt: new Date(),
-                },
-              },
-            );
+            },
+          );
+        }
       } catch (err) {
         this.logger.error(err);
         throw new ConflictException(err.message);
