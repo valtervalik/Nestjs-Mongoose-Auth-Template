@@ -3,12 +3,12 @@ import {
   ConflictException,
   Injectable,
   Logger,
+  NotFoundException,
   Type,
 } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { ActiveUserData } from 'src/auth/interfaces/active-user-data.interface';
-import { NotFoundException } from '@nestjs/common';
 import {
   CustomUpdateOptions,
   IBaseService,
@@ -209,7 +209,7 @@ export function BaseService<M>(
         return data;
       } catch (err) {
         this.logger.error(err);
-        throw new ConflictException(err.message);
+        throw err;
       }
     }
 
@@ -244,7 +244,7 @@ export function BaseService<M>(
         return response;
       } catch (err) {
         this.logger.error(err);
-        throw new ConflictException(err.message);
+        throw err;
       }
     }
 
