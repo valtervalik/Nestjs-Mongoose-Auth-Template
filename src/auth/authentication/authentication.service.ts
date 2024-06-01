@@ -68,7 +68,7 @@ export class AuthenticationService extends BaseService<UserDocument>(
   }
 
   private async signAccessToken<T>(
-    userId: number,
+    userId: string,
     expiresIn: number,
     payload?: T,
   ) {
@@ -87,7 +87,7 @@ export class AuthenticationService extends BaseService<UserDocument>(
   }
 
   private async signRefreshToken<T>(
-    userId: number,
+    userId: string,
     expiresIn: number,
     payload?: T,
   ) {
@@ -110,19 +110,22 @@ export class AuthenticationService extends BaseService<UserDocument>(
     const refreshTokenId = randomUUID();
     const [accessToken, refreshToken] = await Promise.all([
       this.signAccessToken<Partial<ActiveUserData>>(
-        user._id,
+        user._id.toString(),
         this.configService.get('auth.accessTokenTTL', { infer: true }),
         { email: user.email, role: user.role, permission: user.permission },
       ),
       this.signRefreshToken(
-        user._id,
+        user._id.toString(),
         this.configService.get('auth.refreshTokenTTL', { infer: true }),
         {
           refreshTokenId,
         },
       ),
     ]);
-    await this.refreshTokenIdsStorage.insert(user._id, refreshTokenId);
+    await this.refreshTokenIdsStorage.insert(
+      user._id.toString(),
+      refreshTokenId,
+    );
 
     response.cookie(REFRESH_TOKEN_KEY, refreshToken, {
       httpOnly: true,
