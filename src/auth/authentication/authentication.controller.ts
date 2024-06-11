@@ -17,7 +17,6 @@ import { toFileStream } from 'qrcode';
 import { TypedEventEmitter } from 'src/common/types/typed-event-emitter/typed-event-emitter.class';
 import { ChangePasswordDto } from 'src/users/dto/change-password.dto';
 import { UserDocument } from 'src/users/schemas/user.schema';
-import { UsersService } from 'src/users/users.service';
 import { apiResponseHandler } from 'src/utils/ApiResponseHandler';
 import { REFRESH_TOKEN_KEY } from '../auth.constants';
 import { ActiveUser } from '../decorators/active-user.decorator';
@@ -37,7 +36,6 @@ export class AuthenticationController {
     private readonly authenticationService: AuthenticationService,
     private readonly twoFactorAuthService: TwoFactorAuthService,
     private readonly eventEmitter: TypedEventEmitter,
-    private readonly usersService: UsersService,
   ) {}
 
   @Auth(AuthType.None)
@@ -109,6 +107,20 @@ export class AuthenticationController {
     );
   }
 
+  @Get('current-user')
+  async getCurrentUser(@ActiveUser() activeUser: ActiveUserData) {
+    return (await this.authenticationService.findById(activeUser.sub)).populate(
+      ['role', 'permission'],
+    );
+  }
+
+  @Auth(AuthType.None)
+  @Get('logout')
+  logout(@Res({ passthrough: true }) response: Response) {
+    response.clearCookie(REFRESH_TOKEN_KEY);
+    return apiResponseHandler('Logout successful', HttpStatus.OK);
+  }
+
   @Patch('change-password')
   async changePassword(
     @Body() changePasswordDto: ChangePasswordDto,
@@ -133,7 +145,7 @@ export class AuthenticationController {
       throw new BadRequestException('Credenciales incorrectas');
     }
 
-    await this.usersService.update(
+    await this.authenticationService.update(
       user._id.toString(),
       { password },
       { new: false },
@@ -147,11 +159,5 @@ export class AuthenticationController {
       `Contraseña actualizada exitosamente`,
       HttpStatus.OK,
     );
-  }
-
-  @Get('logout')
-  logout(@Res({ passthrough: true }) response: Response) {
-    response.clearCookie(REFRESH_TOKEN_KEY);
-    return apiResponseHandler('Logout successful', HttpStatus.OK);
   }
 }
