@@ -6,6 +6,7 @@ import { GoogleAuthModule } from './auth-google/google-auth.module';
 import { AuthModule } from './auth/auth.module';
 import authConfig from './auth/config/auth.config';
 import cryptoConfig from './common/encrypting/config/crypto.config';
+import { LoggerModule } from './common/logger/logger.module';
 import { TypedEventEmitterModule } from './common/types/typed-event-emitter/typed-event-emitter.module';
 import appConfig from './config/app.config';
 import databaseConfig from './database/config/database.config';
@@ -29,6 +30,7 @@ import redisConfig from './redis/config/redis.config';
       ],
       envFilePath: '.env',
     }),
+    LoggerModule,
     EventEmitterModule.forRoot(),
     DatabaseModule,
     AuthModule,
