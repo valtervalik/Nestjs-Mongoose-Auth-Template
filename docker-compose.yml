@@ -2,19 +2,38 @@ version: '3.8'
 
 services:
   redis:
-    image: redis:7-alpine
+    image: redis:8.0-rc1-alpine
     restart: always
     ports:
       - '${REDIS_PORT}:6379'
     command: redis-server --requirepass ${REDIS_PASSWORD}
+    networks:
+      mongoose-template-network:
+        ipv4_address: 172.26.0.4
 
   mongo:
-    image: mongo:7.0.5
+    image: mongo:8.0.8
     restart: always
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: ${DATABASE_USERNAME}
+      MONGO_INITDB_ROOT_PASSWORD: ${DATABASE_PASSWORD}
+      MONGO_INITDB_DATABASE: ${DATABASE_NAME}
     ports:
       - '${DATABASE_PORT}:27017'
     volumes:
-      - nestjs-template-mongo-db:/data/db
+      - mongoose-template-db:/data/db
+    networks:
+      mongoose-template-network:
+        ipv4_address: 172.26.0.6
 
 volumes:
-  nestjs-template-mongo-db:
+  mongoose-template-db:
+    driver: local
+
+networks:
+  mongoose-template-network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.26.0.0/24
+          gateway: 172.26.0.1
